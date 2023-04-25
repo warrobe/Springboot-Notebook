@@ -2,11 +2,13 @@ package com.xiaofu.flowable.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.bpmn.model.BpmnModel;
+import org.flowable.common.engine.impl.identity.Authentication;
 import org.flowable.engine.*;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.flowable.image.ProcessDiagramGenerator;
 import org.flowable.task.api.Task;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Controller
@@ -33,6 +36,45 @@ public class LeaveController {
     @Autowired
     private ProcessEngine processEngine;
 
+    @RequestMapping(value = "startLeaveProcess1")
+    @ResponseBody
+    public String runProcess(String staffId){
+        Map<String, Object> map = new HashMap<>(2);
+        map.put("processType", "ApplyOffShop");
+        map.put("sponsor", "HD001");
+        map.put("sponsorName", "Ayesha");
+        map.put("sponsorType", "领导");
+        map.put("deptId", "M-G");
+//        map.put("approved", "3");
+        Authentication.setAuthenticatedUserId("zhangsan");
+        // 发起流程
+        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("ApplyOffShop", map);
+        System.out.println(processInstance.getId());
+        return processInstance.getId();
+    }
+    @RequestMapping(value = "misty1")
+    @ResponseBody
+    public void completeTask(String sdf ){
+        Task task = taskService.createTaskQuery()
+                //.processInstanceId("2501")
+                .processDefinitionId(sdf)
+                .taskAssignee("lisi")
+                .singleResult();
+        Map<String, Object> variables = new HashMap<>(2);
+
+        variables.put("approved", false);
+        if(task != null){
+            // 完成任务
+            taskService.complete(task.getId(),variables);
+            System.out.println("完成Task");
+        }
+    }
+    @RequestMapping(value = "misty")
+    @ResponseBody
+    public void misty(boolean staffId){
+
+
+    }
     /**
      * @author xiaofu
      * @description 启动流程
@@ -42,11 +84,11 @@ public class LeaveController {
     @ResponseBody
     public String startLeaveProcess(String staffId) {
         HashMap<String, Object> map = new HashMap<>();
-        map.put("leaveTask", staffId);
-        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("Leave", map);
+        map.put("ApplyOffShopTask", staffId);
+//        ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("ApplyOffShop", map);
         StringBuilder sb = new StringBuilder();
-        sb.append("创建请假流程 processId：" + processInstance.getId());
-        List<Task> tasks = taskService.createTaskQuery().taskAssignee(staffId).orderByTaskCreateTime().desc().list();
+//        sb.append("创建请假流程 processId：" + processInstance.getId());
+        List<Task> tasks = taskService.createTaskQuery().taskAssignee("HD001").orderByTaskCreateTime().desc().list();
         for (Task task : tasks) {
             sb.append("任务taskId:" + task.getId());
         }
@@ -121,7 +163,7 @@ public class LeaveController {
         BpmnModel bpmnModel = repositoryService.getBpmnModel(pi.getProcessDefinitionId());
         ProcessEngineConfiguration engconf = processEngine.getProcessEngineConfiguration();
         ProcessDiagramGenerator diagramGenerator = engconf.getProcessDiagramGenerator();
-        InputStream in = diagramGenerator.generateDiagram(bpmnModel, "png", activityIds, flows, engconf.getActivityFontName(), engconf.getLabelFontName(), engconf.getAnnotationFontName(), engconf.getClassLoader(), 1.0);
+        InputStream in = diagramGenerator.generateDiagram(bpmnModel, "png", activityIds, flows, engconf.getActivityFontName(), engconf.getLabelFontName(), engconf.getAnnotationFontName(), engconf.getClassLoader(), 1.0,false);
         OutputStream out = null;
         byte[] buf = new byte[1024];
         int legth = 0;
