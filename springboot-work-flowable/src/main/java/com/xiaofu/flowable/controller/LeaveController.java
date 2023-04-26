@@ -72,7 +72,11 @@ public class LeaveController {
     @RequestMapping(value = "misty")
     @ResponseBody
     public void misty(boolean staffId){
-
+        System.out.println("===");
+        System.out.println("000");
+        System.out.println("999");
+        System.out.println("888");
+        System.out.println("777");
 
     }
     /**
